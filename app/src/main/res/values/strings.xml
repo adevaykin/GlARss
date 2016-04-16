@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">GlARss</string>
+
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="no_camera_permission">No camera permission.</string>
+    <string name="ok">OK</string>
+</resources>
