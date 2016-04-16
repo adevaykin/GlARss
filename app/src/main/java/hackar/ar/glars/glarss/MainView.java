@@ -301,7 +301,7 @@ public class MainView extends AppCompatActivity {
         @Override
         public void onNewItem(int faceId, Face item) {
             mFaceGraphic.setId(faceId);
-            mCameraSource.takePicture(null, new PictureClbk(item));
+            mCameraSource.takePicture(null, new PictureClbk(item, mFaceGraphic));
         }
 
         /**
@@ -335,9 +335,11 @@ public class MainView extends AppCompatActivity {
 
     class PictureClbk implements CameraSource.PictureCallback {
         private Face mFace;
+        private FaceGraphic mGraphic;
 
-        public PictureClbk(Face face) {
+        public PictureClbk(Face face, FaceGraphic graphic) {
             mFace = face;
+            mGraphic = graphic;
         }
 
         @Override
@@ -368,41 +370,46 @@ public class MainView extends AppCompatActivity {
                     RequestParams params = new RequestParams();
                     params.put("image", fileInput, "face_id_"+String.valueOf(faceId)+".png");
 
-                    AsyncHttpClient client = new AsyncHttpClient();
-                    client.post(SERVER_URL, params, new JsonHttpResponseHandler() {
-                    //client.get(SERVER_URL, new JsonHttpResponseHandler() {
-                        @Override
-                        public void onStart() {
-                            //Log.d("NETWORK", "OnStart");
-                        }
+                    PersonInfo info = new PersonInfo(99, "John Doe", "john@doe.de", "Hi there.", "DnD");
+                    mGraphic.setPersonInfo(info);
 
-                        @Override
-                        public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
-                            Log.d("NETWORK", "Success");
-                            try {
-                                Log.d("NETWORK", "ID: " + response.getInt("ID"));
-                                Log.d("NETWORK", "Name: " + response.getString("Name"));
-                                Log.d("NETWORK", "Text: " + response.getString("Text"));
-                                Log.d("NETWORK", "Status: " + response.getString("Status"));
-                                Log.d("NETWORK", "Email: " + response.getString("Email"));
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                            }
-                        }
-
-                        @Override
-                        public void onFailure(int statusCode, Header[] headers, String res, Throwable e) {
-                            Log.d("NETWORK", "Failure: " + String.valueOf(statusCode));
-                            Log.d("NETWORK", "Response: " + res);
-                            Toast toast = Toast.makeText(getApplicationContext(), "Network error.", Toast.LENGTH_SHORT);
-                            toast.show();
-                        }
-
-                        @Override
-                        public void onRetry(int retryNo) {
-                            //Log.d("NETWORK", "onRetry");
-                        }
-                    });
+//                    AsyncHttpClient client = new AsyncHttpClient();
+//                    client.post(SERVER_URL, params, new JsonHttpResponseHandler() {
+//                    //client.get(SERVER_URL, new JsonHttpResponseHandler() {
+//                        @Override
+//                        public void onStart() {
+//                            //Log.d("NETWORK", "OnStart");
+//                        }
+//
+//                        @Override
+//                        public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+//                            Log.d("NETWORK", "Success");
+//                            try {
+//                                Log.d("NETWORK", "ID: " + response.getInt("ID"));
+//                                Log.d("NETWORK", "Name: " + response.getString("Name"));
+//                                Log.d("NETWORK", "Text: " + response.getString("Text"));
+//                                Log.d("NETWORK", "Status: " + response.getString("Status"));
+//                                Log.d("NETWORK", "Email: " + response.getString("Email"));
+//                                PersonInfo info = new PersonInfo(response.getInt("ID"), response.getString("Name"));
+//                                mGraphic.setPersonInfo(info);
+//                            } catch (JSONException e) {
+//                                e.printStackTrace();
+//                            }
+//                        }
+//
+//                        @Override
+//                        public void onFailure(int statusCode, Header[] headers, String res, Throwable e) {
+//                            Log.d("NETWORK", "Failure: " + String.valueOf(statusCode));
+//                            Log.d("NETWORK", "Response: " + res);
+//                            Toast toast = Toast.makeText(getApplicationContext(), "Network error.", Toast.LENGTH_SHORT);
+//                            toast.show();
+//                        }
+//
+//                        @Override
+//                        public void onRetry(int retryNo) {
+//                            //Log.d("NETWORK", "onRetry");
+//                        }
+//                    });
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -434,6 +441,38 @@ public class MainView extends AppCompatActivity {
 
                 return bmOverlay;
             }
+        }
+    }
+
+    class PersonInfo {
+        private int id;
+        private String name;
+        private String email;
+        private String text;
+        private String status;
+
+        public PersonInfo(int id, String name, String email, String text, String status) {
+            this.id = id;
+            this.name = name;
+            this.email = email;
+            this.text = text;
+            this.status = status;
+        }
+
+        public String getEmail() {
+            return email;
+        }
+
+        public String getText() {
+            return text;
+        }
+
+        public String getStatus() {
+            return status;
+        }
+
+        public String getName() {
+            return name;
         }
     }
 }
