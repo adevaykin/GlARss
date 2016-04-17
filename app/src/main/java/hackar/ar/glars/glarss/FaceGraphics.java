@@ -19,6 +19,7 @@ package hackar.ar.glars.glarss;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.util.Log;
 
 import com.google.android.gms.vision.face.Face;
 
@@ -53,6 +54,12 @@ class FaceGraphic extends GraphicOverlay.Graphic {
     private int mFaceId;
     private MainView.PersonInfo mPersonInfo;
 
+    private boolean mIsRecognizing;
+    private String mSpokenText;
+    private String mBlinkingDots = "";
+
+    private boolean mStopThread;
+
     FaceGraphic(GraphicOverlay overlay) {
         super(overlay);
 
@@ -76,12 +83,60 @@ class FaceGraphic extends GraphicOverlay.Graphic {
         mBackgroundPaint.setAlpha(150);
     }
 
+
+
     void setId(int id) {
         mFaceId = id;
     }
 
     void setPersonInfo(MainView.PersonInfo info) {
         mPersonInfo = info;
+    }
+
+    void setSpeech(String text) {
+        Log.d("SPEECH", "Setting speech");
+        mSpokenText = text;
+        mIsRecognizing = false;
+    }
+
+    void setSpeechProcessing(boolean toggle) {
+        mIsRecognizing = toggle;
+
+        if (toggle) {
+            mStopThread = false;
+            new Thread(new Runnable() {
+                public void run() {
+                    Log.d("BLINKER", "Starting blinker");
+                    while(true) {
+                        try {
+                            if (mIsRecognizing) {
+                                Log.d("BLINKER", "Recognition works. Blink.");
+                                if (mBlinkingDots.length() > 0) {
+                                    mBlinkingDots = "";
+                                    Thread.sleep(200);
+                                } else {
+                                    mBlinkingDots = "...";
+                                    Thread.sleep(500);
+                                }
+                            } else {
+                                mBlinkingDots = "";
+                                Log.d("BLINKER", "No recognition. Turning off.");
+                                Thread.sleep(500);
+                            }
+
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+
+                        if (mStopThread) {
+                            break;
+                        }
+                    }
+                }
+            }).start();
+        } else {
+            mStopThread = true;
+        }
     }
 
 
@@ -116,15 +171,23 @@ class FaceGraphic extends GraphicOverlay.Graphic {
         float right = x + xOffset;
         float bottom = y + yOffset;
 
-        canvas.drawRect(right-20, top, right-20+400, top+210, mBackgroundPaint);
+        canvas.drawRect(right-20, bottom-200, right-20+400, bottom, mBackgroundPaint);
 
         if (mPersonInfo != null) {
-            canvas.drawText(mPersonInfo.getName(), right, top+40, mIdPaint);
-            canvas.drawText(mPersonInfo.getEmail(), right, top+90, mIdPaint);
-            canvas.drawText(mPersonInfo.getText(), right, top+140, mIdPaint);
-            canvas.drawText(mPersonInfo.getStatus(), right, top+190, mIdPaint);
+            canvas.drawText(mPersonInfo.getName(), right, bottom-160, mIdPaint);
+            canvas.drawText(mPersonInfo.getEmail(), right, bottom-110, mIdPaint);
+            canvas.drawText(mPersonInfo.getText(), right, bottom-60, mIdPaint);
+            canvas.drawText(mPersonInfo.getStatus(), right, bottom-10, mIdPaint);
         }
 
-        canvas.drawLine(right-20, top, right-20, top+210, mBoxPaint);
+        canvas.drawRect(left-250, bottom+20, left+600, bottom+85, mBackgroundPaint);
+
+        if (mSpokenText != null) {
+            canvas.drawText(mSpokenText+mBlinkingDots, left-235, bottom+70, mIdPaint);
+        } else {
+            canvas.drawText(mBlinkingDots, left-235, bottom+70, mIdPaint);
+        }
+
+        canvas.drawLine(right-20, bottom-200, right-20, bottom, mBoxPaint);
     }
 }

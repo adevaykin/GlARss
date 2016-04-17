@@ -16,6 +16,9 @@ import android.graphics.PorterDuff;
 import android.graphics.PorterDuffXfermode;
 import android.net.Uri;
 import android.os.Environment;
+import android.speech.RecognitionListener;
+import android.speech.RecognizerIntent;
+import android.speech.SpeechRecognizer;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
@@ -49,6 +52,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 
 import cz.msebera.android.httpclient.Header;
@@ -57,7 +61,7 @@ import cz.msebera.android.httpclient.Header;
  * An example full-screen activity that shows and hides the system UI (i.e.
  * status bar and navigation/system bar) with user interaction.
  */
-public class MainView extends AppCompatActivity {
+public class MainView extends AppCompatActivity  implements RecognitionListener {
     private static final String TAG = "FaceTracker";
 
     private CameraSource mCameraSource = null;
@@ -70,6 +74,8 @@ public class MainView extends AppCompatActivity {
     private static final int RC_HANDLE_CAMERA_PERM = 2;
 
     private final static String SERVER_URL = "http://52.32.152.75:8080/label";
+
+    private static FaceGraphic mLastFaceGraphic;
 
     //==============================================================================================
     // Activity Methods
@@ -100,6 +106,8 @@ public class MainView extends AppCompatActivity {
         } else {
             requestCameraPermission();
         }
+
+        startSpeechRec();
     }
 
     /**
@@ -192,6 +200,10 @@ public class MainView extends AppCompatActivity {
         super.onDestroy();
         if (mCameraSource != null) {
             mCameraSource.release();
+        }
+
+        if (speech != null) {
+            speech.destroy();
         }
     }
 
@@ -403,6 +415,7 @@ public class MainView extends AppCompatActivity {
                                         response.getString("Text"),
                                         response.getString("Status"));
                                 mGraphic.setPersonInfo(info);
+                                mLastFaceGraphic = mGraphic;
                             } catch (JSONException e) {
                                 e.printStackTrace();
                             }
@@ -485,5 +498,134 @@ public class MainView extends AppCompatActivity {
         public String getName() {
             return name;
         }
+    }
+
+    /**
+     * Speech recognition code
+     */
+    private SpeechRecognizer speech = null;
+    private Intent recognizerIntent;
+
+    @Override
+    public void onBeginningOfSpeech() {
+        Log.i("SPEECH", "onBeginningOfSpeech");
+        if (mLastFaceGraphic != null) {
+            mLastFaceGraphic.setSpeechProcessing(true);
+        }
+        //progressBar.setIndeterminate(false);
+        //progressBar.setMax(10);
+    }
+
+    @Override
+    public void onBufferReceived(byte[] buffer) {
+        //Log.i("SPEECH", "onBufferReceived: " + buffer);
+    }
+
+    @Override
+    public void onEndOfSpeech() {
+        Log.i("SPEECH", "onEndOfSpeech");
+        mLastFaceGraphic.setSpeechProcessing(false);
+        //progressBar.setIndeterminate(true);
+        //toggleButton.setChecked(false);
+    }
+
+    @Override
+    public void onError(int errorCode) {
+        String errorMessage = getErrorText(errorCode);
+        Log.d("SPEECH", "FAILED " + errorMessage);
+        startSpeechRec();
+        //returnedText.setText(errorMessage);
+        //toggleButton.setChecked(false);
+    }
+
+    @Override
+    public void onEvent(int arg0, Bundle arg1) {
+        //Log.i("SPEECH", "onEvent");
+    }
+
+    @Override
+    public void onPartialResults(Bundle arg0) {
+        //Log.i("SPEECH", "onPartialResults");
+    }
+
+    @Override
+    public void onReadyForSpeech(Bundle arg0) {
+        Log.i("SPEECH", "onReadyForSpeech");
+    }
+
+    @Override
+    public void onResults(Bundle results) {
+        Log.i("SPEECH", "onResults");
+        ArrayList<String> matches = results.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+        String text = "";
+        for (String result : matches) {
+            text += result + "\n";
+            Log.d("SPEECH", text);
+            if (mLastFaceGraphic != null) {
+                mLastFaceGraphic.setSpeech(text);
+            }
+            break;
+        }
+
+        startSpeechRec();
+        //returnedText.setText(text);
+    }
+
+    @Override
+    public void onRmsChanged(float rmsdB) {
+        //Log.i("SPEECH", "onRmsChanged: " + rmsdB);
+        //progressBar.setProgress((int) rmsdB);
+    }
+
+    public static String getErrorText(int errorCode) {
+        String message;
+        switch (errorCode) {
+            case SpeechRecognizer.ERROR_AUDIO:
+                message = "Audio recording error";
+                break;
+            case SpeechRecognizer.ERROR_CLIENT:
+                message = "Client side error";
+                break;
+            case SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS:
+                message = "Insufficient permissions";
+                break;
+            case SpeechRecognizer.ERROR_NETWORK:
+                message = "Network error";
+                break;
+            case SpeechRecognizer.ERROR_NETWORK_TIMEOUT:
+                message = "Network timeout";
+                break;
+            case SpeechRecognizer.ERROR_NO_MATCH:
+                message = "No match";
+                break;
+            case SpeechRecognizer.ERROR_RECOGNIZER_BUSY:
+                message = "RecognitionService busy";
+                break;
+            case SpeechRecognizer.ERROR_SERVER:
+                message = "error from server";
+                break;
+            case SpeechRecognizer.ERROR_SPEECH_TIMEOUT:
+                message = "No speech input";
+                break;
+            default:
+                message = "Didn't understand, please try again.";
+                break;
+        }
+
+        return message;
+    }
+
+    private void startSpeechRec() {
+        speech = SpeechRecognizer.createSpeechRecognizer(this);
+        speech.setRecognitionListener(this);
+        recognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_PREFERENCE,
+                "en");
+        recognizerIntent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE,
+                this.getPackageName());
+        recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                RecognizerIntent.LANGUAGE_MODEL_WEB_SEARCH);
+        recognizerIntent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3);
+        speech.startListening(recognizerIntent);
     }
 }
