@@ -83,6 +83,12 @@ public class MainView extends AppCompatActivity {
         super.onCreate(icicle);
         setContentView(R.layout.activity_main_view);
 
+        View decorView = getWindow().getDecorView();
+        int uiOptions = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_FULLSCREEN;
+
+        decorView.setSystemUiVisibility(uiOptions);
+
         mPreview = (CameraSourcePreview) findViewById(R.id.preview);
         mGraphicOverlay = (GraphicOverlay) findViewById(R.id.faceOverlay);
 
@@ -152,7 +158,7 @@ public class MainView extends AppCompatActivity {
         }
 
         mCameraSource = new CameraSource.Builder(context, detector)
-                .setRequestedPreviewSize(640, 480)
+                .setRequestedPreviewSize(720, 480)
                 .setFacing(CameraSource.CAMERA_FACING_BACK)
                 .setRequestedFps(30.0f)
                 .build();
@@ -373,43 +379,48 @@ public class MainView extends AppCompatActivity {
                     PersonInfo info = new PersonInfo(99, "John Doe", "john@doe.de", "Hi there.", "DnD");
                     mGraphic.setPersonInfo(info);
 
-//                    AsyncHttpClient client = new AsyncHttpClient();
-//                    client.post(SERVER_URL, params, new JsonHttpResponseHandler() {
-//                    //client.get(SERVER_URL, new JsonHttpResponseHandler() {
-//                        @Override
-//                        public void onStart() {
-//                            //Log.d("NETWORK", "OnStart");
-//                        }
-//
-//                        @Override
-//                        public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
-//                            Log.d("NETWORK", "Success");
-//                            try {
-//                                Log.d("NETWORK", "ID: " + response.getInt("ID"));
-//                                Log.d("NETWORK", "Name: " + response.getString("Name"));
-//                                Log.d("NETWORK", "Text: " + response.getString("Text"));
-//                                Log.d("NETWORK", "Status: " + response.getString("Status"));
-//                                Log.d("NETWORK", "Email: " + response.getString("Email"));
-//                                PersonInfo info = new PersonInfo(response.getInt("ID"), response.getString("Name"));
-//                                mGraphic.setPersonInfo(info);
-//                            } catch (JSONException e) {
-//                                e.printStackTrace();
-//                            }
-//                        }
-//
-//                        @Override
-//                        public void onFailure(int statusCode, Header[] headers, String res, Throwable e) {
-//                            Log.d("NETWORK", "Failure: " + String.valueOf(statusCode));
-//                            Log.d("NETWORK", "Response: " + res);
-//                            Toast toast = Toast.makeText(getApplicationContext(), "Network error.", Toast.LENGTH_SHORT);
-//                            toast.show();
-//                        }
-//
-//                        @Override
-//                        public void onRetry(int retryNo) {
-//                            //Log.d("NETWORK", "onRetry");
-//                        }
-//                    });
+                    AsyncHttpClient client = new AsyncHttpClient();
+                    client.post(SERVER_URL, params, new JsonHttpResponseHandler() {
+                    //client.get(SERVER_URL, new JsonHttpResponseHandler() {
+                        @Override
+                        public void onStart() {
+                            //Log.d("NETWORK", "OnStart");
+                        }
+
+                        @Override
+                        public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+                            Log.d("NETWORK", "Success");
+                            try {
+                                Log.d("NETWORK", "ID: " + response.getInt("ID"));
+                                Log.d("NETWORK", "Name: " + response.getString("Name"));
+                                Log.d("NETWORK", "Text: " + response.getString("Text"));
+                                Log.d("NETWORK", "Status: " + response.getString("Status"));
+                                Log.d("NETWORK", "Email: " + response.getString("Email"));
+                                PersonInfo info = new PersonInfo(
+                                        response.getInt("ID"),
+                                        response.getString("Name"),
+                                        response.getString("Email"),
+                                        response.getString("Text"),
+                                        response.getString("Status"));
+                                mGraphic.setPersonInfo(info);
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(int statusCode, Header[] headers, String res, Throwable e) {
+                            Log.d("NETWORK", "Failure: " + String.valueOf(statusCode));
+                            Log.d("NETWORK", "Response: " + res);
+                            Toast toast = Toast.makeText(getApplicationContext(), "Network error.", Toast.LENGTH_SHORT);
+                            toast.show();
+                        }
+
+                        @Override
+                        public void onRetry(int retryNo) {
+                            //Log.d("NETWORK", "onRetry");
+                        }
+                    });
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
