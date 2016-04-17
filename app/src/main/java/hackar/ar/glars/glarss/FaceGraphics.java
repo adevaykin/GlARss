@@ -171,13 +171,13 @@ class FaceGraphic extends GraphicOverlay.Graphic {
         float right = x + xOffset;
         float bottom = y + yOffset;
 
-        canvas.drawRect(right-20, bottom-200, right-20+400, bottom, mBackgroundPaint);
+        canvas.drawRect(right-20, top, right-20+400, top+210, mBackgroundPaint);
 
         if (mPersonInfo != null) {
-            canvas.drawText(mPersonInfo.getName(), right, bottom-160, mIdPaint);
-            canvas.drawText(mPersonInfo.getEmail(), right, bottom-110, mIdPaint);
-            canvas.drawText(mPersonInfo.getText(), right, bottom-60, mIdPaint);
-            canvas.drawText(mPersonInfo.getStatus(), right, bottom-10, mIdPaint);
+            canvas.drawText(mPersonInfo.getName(), right, top+40, mIdPaint);
+            canvas.drawText(mPersonInfo.getEmail(), right, top+90, mIdPaint);
+            canvas.drawText(mPersonInfo.getText(), right, top+140, mIdPaint);
+            canvas.drawText(mPersonInfo.getStatus(), right, top+190, mIdPaint);
         }
 
         canvas.drawRect(left-250, bottom+20, left+600, bottom+85, mBackgroundPaint);
@@ -188,6 +188,6 @@ class FaceGraphic extends GraphicOverlay.Graphic {
             canvas.drawText(mBlinkingDots, left-235, bottom+70, mIdPaint);
         }
 
-        canvas.drawLine(right-20, bottom-200, right-20, bottom, mBoxPaint);
+        canvas.drawLine(right-20, top, right-20, top+210, mBoxPaint);
     }
 }
